@@ -40,13 +40,20 @@ class PCBReportGenerator:
 			raise RuntimeError(f'Cannot find the layers in {path_to_folder_with_SVG_files_of_the_layers}, the folder is empty. ')
 
 		with self._report:
-			tags.h2('Layers')
-			with tags.div(cls='multi_row_gallery'):
-				for p in (path_to_folder_with_SVG_files_of_the_layers).iterdir():
-					with tags.div():
-						tags.div(p.stem.replace(f'{self.KiCad_project_name}-', ''))
-						tags.img(src=p)
-						tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(44,44,44); text-align: center;')
+			with tags.section():
+				tags.h2('Layers')
+				with tags.div():
+					tags.span('To precisely measure the layers you can open the SVG files located in ')
+					tags.a(f'{path_to_folder_with_SVG_files_of_the_layers.relative_to(self.path_to_PCB_report)}', href=path_to_folder_with_SVG_files_of_the_layers.relative_to(self.path_to_PCB_report))
+					tags.span(' with a graphics software, for example with ')
+					tags.a('Inkscape', href='https://inkscape.org/')
+					tags.span('.')
+				with tags.div(cls='multi_row_gallery'):
+					for p in (path_to_folder_with_SVG_files_of_the_layers).iterdir():
+						with tags.div():
+							tags.div(p.stem.replace(f'{self.KiCad_project_name}-', ''))
+							tags.img(src=p)
+							tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(44,44,44); text-align: center;')
 
 	def _include_physical_stackup(self):
 		file_where_I_expect_to_find_the_physical_stackup = self.path_to_KiCad_project/'Physical Stackup'
@@ -110,10 +117,13 @@ class PCBReportGenerator:
 
 		with self._report.head:
 			tags.style('''
+			body {
+				max-width: 1111px;
+				margin: auto;
+				padding: 11px;
+			}
 			.picture {
 				border-radius: 11px;
-				margin-top: 11px;
-				margin-bottom: 11px;
 			}
 			.multi_row_gallery {
 				display: flex;
@@ -132,6 +142,13 @@ class PCBReportGenerator:
 				font-size: 88%;
 				text-decoration: none;
 				color: inherit;
+			}
+			section {
+				display: flex;
+				flex-direction: column;
+				gap: 11px;
+				margin-top: 33px;
+				margin-bottom: 33px;
 			}
 			''')
 
