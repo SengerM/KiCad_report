@@ -116,6 +116,7 @@ class PCBReportGenerator:
 				gap: 22px;
 				row-gap: 22px;
 				flex-direction: row;
+				align-items: flex-start;
 			}
 			.button_like {
 				outline: none;
