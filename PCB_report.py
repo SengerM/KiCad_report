@@ -52,7 +52,7 @@ class PCBReportGenerator:
 						with tags.div():
 							layer_name = p.stem.replace(f'{self.KiCad_project_name}-', '')
 							tags.div(layer_name)
-							tags.img(src=p, title=str(p.relative_to(self.path_to_PCB_report)), alt=layer_name)
+							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=layer_name)
 							tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
 
 	def _include_physical_stackup(self):
