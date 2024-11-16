@@ -32,8 +32,8 @@ class PCBReportGenerator:
 
 	def _include_SVG_layers(self):
 		path_to_folder_with_SVG_files_of_the_layers = self.path_to_PCB_report_data/'layers_SVG'
-		path_to_folder_with_SVG_files_of_the_layers.mkdir(parents=True)
 
+		path_to_folder_with_SVG_files_of_the_layers.mkdir(parents=True)
 		input(f'⚠️  Please go to the KiCad PCB and manually do "File/Export/SVG", and save the layers into {path_to_folder_with_SVG_files_of_the_layers}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
 
 		if len(list(path_to_folder_with_SVG_files_of_the_layers.iterdir())) == 0:
@@ -41,9 +41,9 @@ class PCBReportGenerator:
 
 		with self._report:
 			tags.h2('Layers')
-			with tags.div(style='display: flex; flex-wrap: wrap; gap: 10px; row-gap: 22px;'):
+			with tags.div(cls='multi_row_gallery'):
 				for p in (path_to_folder_with_SVG_files_of_the_layers).iterdir():
-					with tags.div(style='display: flex; flex-direction: column; gap: 5px;'):
+					with tags.div():
 						tags.div(p.stem.replace(f'{self.KiCad_project_name}-', ''))
 						tags.img(src=p)
 						tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(44,44,44); text-align: center;')
@@ -77,13 +77,70 @@ class PCBReportGenerator:
 				# ~ if lines[i+1][0] == 'sublayer':
 		a
 
+	def _include_3D_model(self):
+		path_to_folder_where_I_expect_to_find_images_of_the_3D_model = self.path_to_PCB_report_data/'3D/img'
+		path_to_folder_where_I_expect_to_find_the_3D_models = self.path_to_PCB_report_data/'3D/model'
+
+		path_to_folder_where_I_expect_to_find_images_of_the_3D_model.mkdir(parents=True)
+		input(f'⚠️  Please go to the KiCad PCB and manually do some nice screenshots of the 3D model, and put them in {path_to_folder_where_I_expect_to_find_images_of_the_3D_model}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+
+		path_to_folder_where_I_expect_to_find_the_3D_models.mkdir(parents=True)
+		input(f'⚠️  Please go to the KiCad PCB and manually export the 3D model into any formats you want, and put them in {path_to_folder_where_I_expect_to_find_the_3D_models}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+
+		for p in [path_to_folder_where_I_expect_to_find_images_of_the_3D_model,path_to_folder_where_I_expect_to_find_the_3D_models]:
+			if len(list(p.iterdir())) == 0:
+				raise RuntimeError(f'{p} is empty. ')
+
+		with self._report:
+			with tags.section():
+				tags.h2('3D model')
+
+				# Links to 3D models:
+				with tags.div(cls='multi_row_gallery'):
+					for p in path_to_folder_where_I_expect_to_find_the_3D_models.iterdir():
+						tags.a(p.name, href=p.relative_to(self.path_to_PCB_report), cls='button_like')
+
+				# Gallery with images of the 3D model:
+				with tags.div(cls='multi_row_gallery'):
+					for p in path_to_folder_where_I_expect_to_find_images_of_the_3D_model.iterdir():
+						tags.img(src=p.relative_to(self.path_to_PCB_report), style='max-width: 333px;', cls='picture')
+
 	def generate_report(self):
 		self.path_to_PCB_report.mkdir()
+
+		with self._report.head:
+			tags.style('''
+			.picture {
+				border-radius: 11px;
+				margin-top: 11px;
+				margin-bottom: 11px;
+			}
+			.multi_row_gallery {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 22px;
+				row-gap: 22px;
+				flex-direction: row;
+			}
+			.button_like {
+				outline: none;
+				border: 0;
+				padding: 11px;
+				border-radius: 11px;
+				background-color: rgb(222,222,222);
+				font-family: inherit;
+				font-size: 88%;
+				text-decoration: none;
+				color: inherit;
+			}
+			''')
 
 		with self._report:
 			tags.h1(self.KiCad_project_name)
 
 		self._include_SVG_layers()
+
+		self._include_3D_model()
 
 		# ~ self._include_physical_stackup()
 
