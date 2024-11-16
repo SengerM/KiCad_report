@@ -1,6 +1,5 @@
 from pathlib import Path
 import dominate, dominate.tags as tags
-import pandas
 
 class PCBReportGenerator:
 	def __init__(self, path_to_KiCad_project:Path):
@@ -53,36 +52,20 @@ class PCBReportGenerator:
 						with tags.div():
 							tags.div(p.stem.replace(f'{self.KiCad_project_name}-', ''))
 							tags.img(src=p)
-							tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(44,44,44); text-align: center;')
+							tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
 
 	def _include_physical_stackup(self):
-		file_where_I_expect_to_find_the_physical_stackup = self.path_to_KiCad_project/'Physical Stackup'
-		if not file_where_I_expect_to_find_the_physical_stackup.is_file():
-			raise RuntimeError(f'Cannot find physical stackup file {file_where_I_expect_to_find_the_physical_stackup}. ')
+		path_to_folder_where_I_expect_to_find_the_physical_stackup = self.path_to_PCB_report_data/'physical stackup'
 
-		with open(file_where_I_expect_to_find_the_physical_stackup, 'r') as ifile:
-			lines = ifile.readlines()
+		path_to_folder_where_I_expect_to_find_the_physical_stackup.mkdir(parents=True)
+		input(f'⚠️  Please go to the KiCad PCB and make a screenshot of the physical stackyp, and save it into {path_to_folder_where_I_expect_to_find_the_physical_stackup}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
 
-		# Now convert the weird format into a simple table:
-		rows = []
-		nicer_format = []
-		lines_iterator = iter(lines)
-		line = next(lines_iterator)
-		while True:
-			print(line)
-			a
-			clean_line_parts = line.replace('"','').replace('\n','').removeprefix('  ').split(' ')
-			next_clean_line_parts = next(lines_iterator).replace('"','').replace('\n','').removeprefix('  ').split(' ')
-			print(clean_line_parts)
-			print(next_clean_line_parts)
-			if next_clean_line_parts[0] == 'layer':
-				row = {clean_line_parts[2*i]:clean_line_parts[2*i+1] for i in range(int(len(clean_line_parts)/2))}
-				rows.append(row)
-				print(row)
-			a
-			# ~ if i < len(lines):
-				# ~ if lines[i+1][0] == 'sublayer':
-		a
+		with self._report:
+			with tags.section():
+				tags.h2('Physical stackup')
+				with tags.div(cls='multi_row_gallery'):
+					for p in path_to_folder_where_I_expect_to_find_the_physical_stackup.iterdir():
+						tags.img(src=p.relative_to(self.path_to_PCB_report), cls='picture')
 
 	def _include_3D_model(self):
 		path_to_folder_where_I_expect_to_find_images_of_the_3D_model = self.path_to_PCB_report_data/'3D/img'
@@ -124,6 +107,7 @@ class PCBReportGenerator:
 			}
 			.picture {
 				border-radius: 11px;
+				max-width: 100%;
 			}
 			.multi_row_gallery {
 				display: flex;
@@ -150,16 +134,20 @@ class PCBReportGenerator:
 				margin-top: 33px;
 				margin-bottom: 33px;
 			}
+			h2:after {
+				content:' ';
+				display:block;
+				border: .5px solid rgb(155,155,155);
+			}
+
 			''')
 
 		with self._report:
 			tags.h1(self.KiCad_project_name)
 
 		self._include_SVG_layers()
-
 		self._include_3D_model()
-
-		# ~ self._include_physical_stackup()
+		self._include_physical_stackup()
 
 		with open(self.path_to_PCB_report/'PCB_report.html', 'w') as ofile:
 			print(self._report, file=ofile)
