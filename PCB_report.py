@@ -92,6 +92,48 @@ class PCBReportGenerator:
 							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=layer_name)
 							tags.div('←50 mm→', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
 
+	def _include_drills(self):
+		path_where_to_place_drill_info = self.path_to_PCB_report_data/'drill'
+		path_where_to_place_drill_info.mkdir(parents=True)
+
+		# Export drill info:
+		subprocess.run(
+			[
+				'kicad-cli', 'pcb',
+				'export', 'drill',
+				str(self.path_to_KiCad_pcb_file),
+				'--output', str(path_where_to_place_drill_info),
+				'--generate-map',
+				'--map-format', 'svg',
+				'--excellon-separate-th',
+			]
+		)
+
+		with self._report:
+			with tags.section():
+				tags.h2('Drills')
+				with tags.div():
+					tags.span('More information and formats available in folder ')
+					tags.a(f'{path_where_to_place_drill_info.relative_to(self.path_to_PCB_report)}', href=path_where_to_place_drill_info.relative_to(self.path_to_PCB_report))
+					tags.span('.')
+				with tags.div(cls='multi_row_gallery'):
+					for p in (path_where_to_place_drill_info).iterdir():
+						if p.suffix != '.svg':
+							continue
+						# Use Inkscape to remove annoying margin from SVG drawings:
+						subprocess.run(
+							[
+								'inkscape',
+								'--export-area-drawing',
+								str(p),
+								'-o', str(p),
+							]
+						)
+						with tags.div():
+							drills_name = p.stem.replace(f'{self.KiCad_project_name}-', '')
+							tags.div(drills_name)
+							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=drills_name)
+
 	def _include_physical_stackup(self):
 		path_to_folder_where_I_expect_to_find_the_physical_stackup = self.path_to_PCB_report_data/'physical stackup'
 
@@ -201,8 +243,9 @@ class PCBReportGenerator:
 		with self._report:
 			tags.h1(self.KiCad_project_name)
 
-		self._include_SVG_layers()
 		self._include_3D_model()
+		self._include_SVG_layers()
+		self._include_drills()
 		self._include_physical_stackup()
 
 		with open(self.path_to_PCB_report/'PCB_report.html', 'w') as ofile:
