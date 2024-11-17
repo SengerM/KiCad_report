@@ -46,7 +46,7 @@ class PCBReportGenerator:
 					current_indentation_level = len(line.split('(')[0])
 					if current_indentation_level <= initial_indentation_level or line == line.split('(')[0]:
 						return layers
-					layer_name = line.split(' ')[current_indentation_level+1].lstrip('"').rstrip('"')
+					layer_name = line.split('"')[1].lstrip('"').rstrip('"')
 					layers.append(layer_name)
 
 	def _include_SVG_layers(self):
@@ -64,7 +64,7 @@ class PCBReportGenerator:
 			'B.Mask',
 			'F.Mask',
 			'Edge.Cuts',
-			'Dwgs.User',
+			'Cmts.User',
 		]
 
 		actual_layers_in_PCB = self._parse_layers()
