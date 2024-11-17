@@ -30,6 +30,10 @@ class PCBReportGenerator:
 		else:
 			return self._KiCad_project_name
 
+	@property
+	def path_to_KiCad_pcb_file(self):
+		return self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb'
+
 	def _parse_layers(self):
 		layers = []
 		with open(self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb', 'r') as ifile:
@@ -109,7 +113,24 @@ class PCBReportGenerator:
 		input(f'⚠️  Please go to the KiCad PCB and manually do some nice screenshots of the 3D model, and put them in {path_to_folder_where_I_expect_to_find_images_of_the_3D_model}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
 
 		path_to_folder_where_I_expect_to_find_the_3D_models.mkdir(parents=True)
-		input(f'⚠️  Please go to the KiCad PCB and manually export the 3D model into any formats you want, and put them in {path_to_folder_where_I_expect_to_find_the_3D_models}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+
+		export_commands = dict(
+			vrml = [
+				'kicad-cli', 'pcb',
+				'export', 'vrml',
+				str(self.path_to_KiCad_pcb_file),
+				'--output', f'{path_to_folder_where_I_expect_to_find_the_3D_models}/{self.KiCad_project_name}.wrl',
+				'--units', 'mm',
+			],
+			step = [
+				'kicad-cli', 'pcb',
+				'export', 'step',
+				str(self.path_to_KiCad_pcb_file),
+				'--output', f'{path_to_folder_where_I_expect_to_find_the_3D_models}/{self.KiCad_project_name}.step',
+			]
+		)
+		for format_name, cmd in export_commands.items():
+			subprocess.run(cmd)
 
 		for p in [path_to_folder_where_I_expect_to_find_images_of_the_3D_model,path_to_folder_where_I_expect_to_find_the_3D_models]:
 			if len(list(p.iterdir())) == 0:
