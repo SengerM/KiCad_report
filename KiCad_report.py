@@ -251,8 +251,11 @@ class PCBReportGenerator:
 		self._include_drills()
 		self._include_physical_stackup()
 
-		with open(self.path_to_PCB_report/'PCB_report.html', 'w') as ofile:
+		path_to_report = self.path_to_PCB_report/'PCB_report.html'
+		with open(path_to_report, 'w') as ofile:
 			print(self._report, file=ofile)
+
+		print(f'Report was saved in {path_to_report}')
 
 if __name__ == '__main__':
 	import argparse
