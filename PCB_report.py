@@ -1,5 +1,6 @@
 from pathlib import Path
 import dominate, dominate.tags as tags
+import subprocess
 
 class PCBReportGenerator:
 	def __init__(self, path_to_KiCad_project:Path):
@@ -29,11 +30,43 @@ class PCBReportGenerator:
 		else:
 			return self._KiCad_project_name
 
+	def _parse_layers(self):
+		layers = []
+		with open(self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb', 'r') as ifile:
+			for line in ifile:
+				if '(layers' not in line:
+					continue
+				initial_indentation_level = len(line.split('(')[0])
+				while True:
+					line = next(ifile)
+					current_indentation_level = len(line.split('(')[0])
+					if current_indentation_level <= initial_indentation_level or line == line.split('(')[0]:
+						return layers
+					layer_name = line.split(' ')[current_indentation_level+1].lstrip('"').rstrip('"')
+					layers.append(layer_name)
+
 	def _include_SVG_layers(self):
 		path_to_folder_with_SVG_files_of_the_layers = self.path_to_PCB_report_data/'layers_SVG'
 
 		path_to_folder_with_SVG_files_of_the_layers.mkdir(parents=True)
-		input(f'⚠️  Please go to the KiCad PCB and manually do "File/Export/SVG", and save the layers into {path_to_folder_with_SVG_files_of_the_layers}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+
+		# Layers to be included in the report, the actual layers will be the intersection between this list and the actual layers in the PCB, e.g. `In77.Cu` will not be created if such layer is not in the actual PCB.
+		LAYERS_TO_INCLUDE = [
+			'F.Cu',
+		] + [f'In{i}.Cu' for i in range(99)] + [
+			'B.Cu',
+			'B.SilkS',
+			'F.SilkS',
+			'B.Mask',
+			'F.Mask',
+			'Edge.Cuts',
+			'Dwgs.User',
+		]
+
+		actual_layers_in_PCB = self._parse_layers()
+		for layer in [l for l in LAYERS_TO_INCLUDE if l in actual_layers_in_PCB]:
+			cmd = ['kicad-cli','pcb','export','svg',str(self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb'),'--layers',layer,'--output',f'{path_to_folder_with_SVG_files_of_the_layers}/{layer}.svg','--page-size-mode','2','--exclude-drawing-sheet','--black-and-white']
+			subprocess.run(cmd)
 
 		if len(list(path_to_folder_with_SVG_files_of_the_layers.iterdir())) == 0:
 			raise RuntimeError(f'Cannot find the layers in {path_to_folder_with_SVG_files_of_the_layers}, the folder is empty. ')
