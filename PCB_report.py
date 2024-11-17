@@ -36,7 +36,7 @@ class PCBReportGenerator:
 
 	def _parse_layers(self):
 		layers = []
-		with open(self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb', 'r') as ifile:
+		with open(self.path_to_KiCad_pcb_file, 'r') as ifile:
 			for line in ifile:
 				if '(layers' not in line:
 					continue
@@ -69,7 +69,7 @@ class PCBReportGenerator:
 
 		actual_layers_in_PCB = self._parse_layers()
 		for layer in [l for l in LAYERS_TO_INCLUDE if l in actual_layers_in_PCB]:
-			cmd = ['kicad-cli','pcb','export','svg',str(self.path_to_KiCad_project/f'{self.KiCad_project_name}.kicad_pcb'),'--layers',layer,'--output',f'{path_to_folder_with_SVG_files_of_the_layers}/{layer}.svg','--page-size-mode','2','--exclude-drawing-sheet','--black-and-white']
+			cmd = ['kicad-cli','pcb','export','svg',str(self.path_to_KiCad_pcb_file),'--layers',layer,'--output',f'{path_to_folder_with_SVG_files_of_the_layers}/{layer}.svg','--page-size-mode','2','--exclude-drawing-sheet','--black-and-white']
 			subprocess.run(cmd)
 
 		if len(list(path_to_folder_with_SVG_files_of_the_layers.iterdir())) == 0:
@@ -90,7 +90,7 @@ class PCBReportGenerator:
 							layer_name = p.stem.replace(f'{self.KiCad_project_name}-', '')
 							tags.div(layer_name)
 							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=layer_name)
-							tags.div('50 mm', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
+							tags.div('←50 mm→', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
 
 	def _include_physical_stackup(self):
 		path_to_folder_where_I_expect_to_find_the_physical_stackup = self.path_to_PCB_report_data/'physical stackup'
