@@ -2,6 +2,9 @@ from pathlib import Path
 import dominate, dominate.tags as tags
 import subprocess
 
+def metric_scale_bar(size_mm:int):
+	return tags.div(f'←{size_mm} mm→', style=f'width: {size_mm}mm; color: white; background-color: rgb(111,111,111); text-align: center; margin: 2px;')
+
 class PCBReportGenerator:
 	def __init__(self, path_to_KiCad_project:Path):
 		self._path_to_KiCad_project = Path(path_to_KiCad_project)
@@ -90,7 +93,7 @@ class PCBReportGenerator:
 							layer_name = p.stem.replace(f'{self.KiCad_project_name}-', '')
 							tags.div(layer_name)
 							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=layer_name)
-							tags.div('←50 mm→', style='width: 50mm; color: white; background-color: rgb(111,111,111); text-align: center;')
+							metric_scale_bar(50)
 
 	def _include_drills(self):
 		path_where_to_place_drill_info = self.path_to_PCB_report_data/'drill'
