@@ -1,6 +1,7 @@
 from pathlib import Path
 import dominate, dominate.tags as tags
 import subprocess
+import logging
 
 def metric_scale_bar(size_mm:int):
 	return tags.div(f'←{size_mm} mm→', style=f'width: {size_mm}mm; color: white; background-color: rgb(111,111,111); text-align: center; margin: 2px;')
@@ -10,6 +11,8 @@ class PCBReportGenerator:
 		self._path_to_KiCad_project = Path(path_to_KiCad_project)
 		self._report = dominate.document(title = self.path_to_KiCad_project.name)
 		self.KiCad_project_name # Will validate the directory.
+
+		self.logger = logging.getLogger(__name__)
 
 	@property
 	def path_to_KiCad_project(self):
@@ -53,6 +56,7 @@ class PCBReportGenerator:
 					layers.append(layer_name)
 
 	def _include_SVG_layers(self):
+		self.logger.info('Creating report of layers...')
 		path_to_folder_with_SVG_files_of_the_layers = self.path_to_PCB_report_data/'layers_SVG'
 
 		path_to_folder_with_SVG_files_of_the_layers.mkdir(parents=True)
@@ -73,7 +77,7 @@ class PCBReportGenerator:
 		actual_layers_in_PCB = self._parse_layers()
 		for layer in [l for l in LAYERS_TO_INCLUDE if l in actual_layers_in_PCB]:
 			cmd = ['kicad-cli','pcb','export','svg',str(self.path_to_KiCad_pcb_file),'--layers',layer,'--output',f'{path_to_folder_with_SVG_files_of_the_layers}/{layer}.svg','--page-size-mode','2','--exclude-drawing-sheet','--black-and-white']
-			subprocess.run(cmd)
+			subprocess.check_output(cmd)
 
 		if len(list(path_to_folder_with_SVG_files_of_the_layers.iterdir())) == 0:
 			raise RuntimeError(f'Cannot find the layers in {path_to_folder_with_SVG_files_of_the_layers}, the folder is empty. ')
@@ -96,11 +100,12 @@ class PCBReportGenerator:
 							metric_scale_bar(50)
 
 	def _include_drills(self):
+		self.logger.info('Creating report of drills...')
 		path_where_to_place_drill_info = self.path_to_PCB_report_data/'drill'
 		path_where_to_place_drill_info.mkdir(parents=True)
 
 		# Export drill info:
-		subprocess.run(
+		subprocess.check_output(
 			[
 				'kicad-cli', 'pcb',
 				'export', 'drill',
@@ -109,6 +114,7 @@ class PCBReportGenerator:
 				'--generate-map',
 				'--map-format', 'svg',
 				'--excellon-separate-th',
+				'--excellon-units', 'mm',
 			]
 		)
 
@@ -124,7 +130,7 @@ class PCBReportGenerator:
 						if p.suffix != '.svg':
 							continue
 						# Use Inkscape to remove annoying margin from SVG drawings:
-						subprocess.run(
+						subprocess.check_output(
 							[
 								'inkscape',
 								'--export-area-drawing',
@@ -138,6 +144,7 @@ class PCBReportGenerator:
 							tags.img(src=p.relative_to(self.path_to_PCB_report), title=str(p.relative_to(self.path_to_PCB_report)), alt=drills_name)
 
 	def _include_physical_stackup(self):
+		self.logger.info('Creating report of physical stackup...')
 		path_to_folder_where_I_expect_to_find_the_physical_stackup = self.path_to_PCB_report_data/'physical stackup'
 
 		path_to_folder_where_I_expect_to_find_the_physical_stackup.mkdir(parents=True)
@@ -151,6 +158,7 @@ class PCBReportGenerator:
 						tags.img(src=p.relative_to(self.path_to_PCB_report), cls='picture')
 
 	def _include_3D_model(self):
+		self.logger.info('Creating report of 3D models...')
 		path_to_folder_where_I_expect_to_find_images_of_the_3D_model = self.path_to_PCB_report_data/'3D/img'
 		path_to_folder_where_I_expect_to_find_the_3D_models = self.path_to_PCB_report_data/'3D/model'
 
@@ -169,7 +177,7 @@ class PCBReportGenerator:
 				'--floor',
 				str(self.path_to_KiCad_pcb_file),
 			]
-			subprocess.run(cmd)
+			subprocess.check_output(cmd)
 
 		path_to_folder_where_I_expect_to_find_the_3D_models.mkdir(parents=True)
 
@@ -189,7 +197,7 @@ class PCBReportGenerator:
 			]
 		)
 		for format_name, cmd in export_commands.items():
-			subprocess.run(cmd)
+			subprocess.check_output(cmd)
 
 		for p in [path_to_folder_where_I_expect_to_find_images_of_the_3D_model,path_to_folder_where_I_expect_to_find_the_3D_models]:
 			if len(list(p.iterdir())) == 0:
@@ -269,10 +277,12 @@ class PCBReportGenerator:
 		with open(path_to_report, 'w') as ofile:
 			print(self._report, file=ofile)
 
-		print(f'Report was saved in {path_to_report}')
+		self.logger.info(f'Report was saved in {path_to_report}')
 
 if __name__ == '__main__':
 	import argparse
+
+	logging.basicConfig(level=logging.INFO)
 
 	parser = argparse.ArgumentParser(
 		prog = 'PCB_report',
