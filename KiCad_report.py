@@ -155,7 +155,21 @@ class PCBReportGenerator:
 		path_to_folder_where_I_expect_to_find_the_3D_models = self.path_to_PCB_report_data/'3D/model'
 
 		path_to_folder_where_I_expect_to_find_images_of_the_3D_model.mkdir(parents=True)
-		input(f'⚠️  Please go to the KiCad PCB and manually do some nice screenshots of the 3D model, and put them in {path_to_folder_where_I_expect_to_find_images_of_the_3D_model}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+		# ~ input(f'⚠️  Please go to the KiCad PCB and manually do some nice screenshots of the 3D model, and put them in {path_to_folder_where_I_expect_to_find_images_of_the_3D_model}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
+
+		for i,cammera_angle in enumerate([(-45,0,-45),(0,0,0)]):
+			cmd = [
+				'kicad-cli-nightly',
+				'pcb', 'render',
+				'--output', str(path_to_folder_where_I_expect_to_find_images_of_the_3D_model/f'{i}.png'),
+				'--rotate', f"'{cammera_angle}'".replace('(','').replace(')','').replace(' ',''),
+				'--zoom', '.7',
+				'--width', '1111',
+				'--height', '1111',
+				'--floor',
+				str(self.path_to_KiCad_pcb_file),
+			]
+			subprocess.run(cmd)
 
 		path_to_folder_where_I_expect_to_find_the_3D_models.mkdir(parents=True)
 
