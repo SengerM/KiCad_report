@@ -165,7 +165,7 @@ class PCBReportGenerator:
 		path_to_folder_where_I_expect_to_find_images_of_the_3D_model.mkdir(parents=True)
 		# ~ input(f'⚠️  Please go to the KiCad PCB and manually do some nice screenshots of the 3D model, and put them in {path_to_folder_where_I_expect_to_find_images_of_the_3D_model}. Once you are done, press enter here. (Sorry, still don\'t know how to automate this step.) ')
 
-		for i,cammera_angle in enumerate([(-45,0,-45),(0,0,0)]):
+		for i,cammera_angle in enumerate([(-45,0,22),(0,0,0),(-33,0,-33),(90+45,0,-33)]):
 			cmd = [
 				'kicad-cli-nightly',
 				'pcb', 'render',
